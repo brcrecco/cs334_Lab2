@@ -4,6 +4,12 @@
 
 #ifndef NPROC
 #define	NPROC		8
+#endif
+
+/* Maximum number of messages allowed in mailbox */
+
+#ifndef NMSG
+#define NMSG		30
 #endif		
 
 /* Process state constants */
@@ -52,6 +58,9 @@ struct procent {		/* Entry in the process table		*/
 	umsg32	prmsg;		/* Message sent to this process		*/
 	bool8	prhasmsg;	/* Nonzero iff msg is valid		*/
 	int16	prdesc[NDESC];	/* Device descriptors for process	*/
+	umsg32	mailbox[NMSG]; 	/* Mailbox to which messages can be sent */
+	int16 	mboxhead;	/* The index of the first message in mailbox */
+	int16 	mboxtail; 	/* The index of the first available space in mailbox */
 };
 
 /* Marker for the top of a process stack (used to help detect overflow)	*/
