@@ -195,12 +195,6 @@ static	void	sysinit()
 	prptr->prstklen = NULLSTK;
 	prptr->prstkptr = 0;
 	currpid = NULLPROC;
-	prptr->mboxhead = 0;
-	prptr->mboxtail = 0;
-
-	for(i=0; i < NSMG; i++ ) {
-		prptr->mailbox[i] = NULL;
-	}
 	
 	/* Initialize semaphores */
 

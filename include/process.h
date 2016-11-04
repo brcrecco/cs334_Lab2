@@ -59,6 +59,8 @@ struct procent {		/* Entry in the process table		*/
 	bool8	prhasmsg;	/* Nonzero iff msg is valid		*/
 	int16	prdesc[NDESC];	/* Device descriptors for process	*/
 	umsg32	mailbox[NMSG]; 	/* Mailbox to which messages can be sent */
+	sid32 	sendsem;	/* Semaphore on which to wait for sending messages */
+	sid32 	recsem;		/* Semaphore on which to wait for receiving messages */
 	int16 	mboxhead;	/* The index of the first message in mailbox */
 	int16 	mboxtail; 	/* The index of the first available space in mailbox */
 };

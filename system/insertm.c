@@ -7,16 +7,21 @@ status insertm(
 	umsg32 msg
 	)
 {
-	umsg32[]	mailbox = proctab[pid].mailbox;
-	int16 	 	head = proctab[pid].mboxhead;
-	int16 		tail = proctab[pid].mboxtail;
 
-	if(mailbox[tail] != NULL ) {
+	struct	procent	*prptr = &proctab[pid];		/* Ptr to process table entry	*/
+
+	umsg32[]	mailbox = prptr->mailbox;
+	sid32		sendsem  = prptr->sendsem;
+	sid32		recsem	= prptr->recsem;
+	int16 		tail = prptr->mboxtail;
+
+	if(semcount(sem) > 0) {
+		wait(sendsem);
+		mailbox[tail] = msg;
+		tail = (tail +1) % NMSG;
+		signal(recsem);
+	} else {
 		return SYSERR;
 	}
-
-	mailbox[tail] = msg;
-	tail = (tail +1) % NMSG;
-
 	return OK;
 }
