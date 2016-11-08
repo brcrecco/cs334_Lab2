@@ -15,13 +15,13 @@ status insertm(
 	sid32		recsem	= prptr->recsem;
 	int16 		tail = prptr->mboxtail;
 
-	if(semcount(sendsem) > 0) {
-		wait(sendsem);
-		mailbox[tail] = msg;
-		tail = (tail +1) % NMSG;
-		signal(recsem);
+	if(semcount(sendsem) > 0) {		/* if there is an empty slot in mailbox to send a msg to */
+		wait(sendsem); 	/* decrement number of available spaces */
+		mailbox[tail] = msg;	/* place message at tail */
+		tail = (tail +1) % NMSG; 	/* update the tail */
+		signal(recsem);	/* signal recsem to indicate new receivable message */
 	} else {
-		return SYSERR;
+		return SYSERR; /* no empty spaces, return SYSERR */
 	}
 	return OK;
 }

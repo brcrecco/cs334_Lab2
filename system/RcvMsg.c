@@ -12,28 +12,30 @@ syscall RcvMsg(umsg32* msgs, uint32 msg_count)
 	sid32		sendsem  = prptr->sendsem;
 	sid32		recsem	= prptr->recsem;
 	int16 		head = prptr->mboxhead;
-	uint32		msg_needed = msg_count;
+	uint32		msg_needed = msg_count; 	/* amount of messages needed to be received in order to return */
 
-	if(msg_count < 0) {
+	if(msg_count < 0) { 
 		restore(mask);
 		return SYSERR;
 	}
 
-	while(semcount(recsem) < msg_needed) {
-		wait(recsem);
-		msg_needed--;
+	if(sizeof(*msgs) < msg_count) {
+		restore(mask);
+		return SYSERR;
 	}
 
-	umsg32 received_msgs = mailbox[msg_count];
-
-	for(int i = 0; i < msg_count; i++) {
-		wait(recsem);
-		//received_msgs[i] = mailbox[head];
-		head = (head + 1) % NMSG;	
-		signal(sendsem);
+	while(semcount(recsem) < msg_needed) { /* less msgs available than wanted to receive */
+		wait(recsem); /* wait on msgs to be received */
+		msg_needed--; /* one less msg needed */
 	}
 
-	msgs = &received_msgs;
+	for(int i = 0; i < msg_count; i++) { 	/* enough messages available to be received */
+
+		msgs[i] = mailbox[head];	/* store received messages in msgs */
+		head = (head + 1) % NMSG;	/* update the head */
+		signal(sendsem); 	/* signal new opening in mailbox */
+	}
+
 	restore(mask);
 	return OK;
 }
