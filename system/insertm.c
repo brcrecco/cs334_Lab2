@@ -8,14 +8,14 @@ status insertm(
 	)
 {
 
-	struct	procent	*prptr = &proctab[pid];		/* Ptr to process table entry	*/
+	struct	procent	*prptr = &proctab[pid];		// Ptr to process table entry	
 
-	umsg32[]	mailbox = prptr->mailbox;
+	umsg32		*mailbox = prptr->mailbox;
 	sid32		sendsem  = prptr->sendsem;
 	sid32		recsem	= prptr->recsem;
 	int16 		tail = prptr->mboxtail;
 
-	if(semcount(sem) > 0) {
+	if(semcount(sendsem) > 0) {
 		wait(sendsem);
 		mailbox[tail] = msg;
 		tail = (tail +1) % NMSG;

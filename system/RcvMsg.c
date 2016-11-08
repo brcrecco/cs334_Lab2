@@ -8,7 +8,7 @@ syscall RcvMsg(umsg32* msgs, uint32 msg_count)
   
 	struct	procent	*prptr = &proctab[currpid];		/* Ptr to process table entry	*/
 
-	umsg32[]	mailbox = prptr->mailbox;
+	umsg32		*mailbox = prptr->mailbox;
 	sid32		sendsem  = prptr->sendsem;
 	sid32		recsem	= prptr->recsem;
 	int16 		head = prptr->mboxhead;
@@ -24,11 +24,11 @@ syscall RcvMsg(umsg32* msgs, uint32 msg_count)
 		msg_needed--;
 	}
 
-	umsg32[] received_msgs = umsg32[msg_count];
+	umsg32 received_msgs = mailbox[msg_count];
 
 	for(int i = 0; i < msg_count; i++) {
 		wait(recsem);
-		received_msgs[i] = mailbox[head];
+		//received_msgs[i] = mailbox[head];
 		head = (head + 1) % NMSG;	
 		signal(sendsem);
 	}
