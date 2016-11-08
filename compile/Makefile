@@ -9,7 +9,7 @@
 #########################################################################
 
 # Change this to the number of your Xinu machine
-MACHINENUM = 1
+MACHINENUM = 23
 
 COMPILER_ROOT	=	/usr/bin/
 PNAME		=	galileo
