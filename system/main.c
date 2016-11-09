@@ -22,7 +22,7 @@ process Task2Test(void) {
 	resume(consumer);
 	
 	while(1) {
-		sleepms(1);
+		//sleepms(1);
 		kprintf("Producer created: %d items and Consumer consumed: %d items\n", produced, consumed);
 	}
 
@@ -36,7 +36,8 @@ process Task2Producer(pid32 consumer) {
 		uint32 sent_msgs = SendMsg(consumer, msg, 1);
 		if(sent_msgs != SYSERR) {
 			produced += sent_msgs;
-		}
+		}	
+		sleepms(1);
 	}
 
 	return OK;
@@ -51,6 +52,7 @@ process Task2Consumer(void) {
 		if(rcv == OK) {
 			consumed += numMsgs;
 		}
+		sleepms(1);
 	}
 
 	return OK;
