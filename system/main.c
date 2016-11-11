@@ -24,7 +24,7 @@ process Task2Test(), Task2Producer(), Task2Consumer(), Task3Producer(), Task3Con
 
 process	main(void)
 {
-	resume(create(Task3Test, 8192, 50, "Task3Test", 0));
+	resume(create(Task2Test, 8192, 50, "Task2Test", 0));
 	return OK;
 }
 
@@ -106,7 +106,7 @@ process Task3Test(void) {
 		kprintf("Producer 1 created: %d items and Consumer 1 consumed: %d items\n", task3produced1, task3consumed1);
 		kprintf("Producer 2 created: %d items and Consumer 2 consumed: %d items\n", task3produced2, task3consumed2);
 		kprintf("Producer 3 created: %d items and Consumer 3 consumed: %d items\n", task3produced3, task3consumed3);
-		kprintf("Allocator node has: %d items from 1 %d items from 2 %d items from 3\n", allocated1, allocated2, allocated3);
+		kprintf("Allocator node has: %d items from 1 %d items from 2 %d items from 3\n\n", allocated1, allocated2, allocated3);
 
 		sleepms(1);
 	}
@@ -127,7 +127,7 @@ process Task3Producer(pid32 allocator, umsg32* msg) {
 						break;
 				case 3: task3produced3 += sent_msgs;
 						break;
-				default: //kprintf("not producing\n");
+				default:
 						break;
 			}
 		}
@@ -143,7 +143,7 @@ process Task3Consumer(void) {
 
 	while(1) {
 		syscall rcv = RcvMsg(msg, 1);
-		//kprintf("[%d] \n", *msg);
+
 		if(rcv == OK) {
 			switch(msg[0]) {	// gets the first value
 				case 1: task3consumed1++;
@@ -152,7 +152,7 @@ process Task3Consumer(void) {
 						break;
 				case 3: task3consumed3++;
 						break;
-				default: //kprintf("not consuming\n"); 
+				default: 
 						break;
 			}
 		}
@@ -169,7 +169,7 @@ process Task3Allocator(pid32 consumer1, pid32 consumer2, pid32 consumer3) {
 	while(1) {
 		syscall rect = RcvMsg(msg, 5);
 		for(int i = 0; i < 5; i++){
-			//kprintf("{%u}\n", msg[i]);
+
 			switch(msg[i]) {
 				case 1: allocated1++;
 						break;
@@ -177,7 +177,7 @@ process Task3Allocator(pid32 consumer1, pid32 consumer2, pid32 consumer3) {
 						break;
 				case 3: allocated3++;
 						break;
-				default: //kprintf("REC\n"); 
+				default: 
 						break;
 			}
 		}
@@ -185,18 +185,18 @@ process Task3Allocator(pid32 consumer1, pid32 consumer2, pid32 consumer3) {
 		for(int i = 0; i < 5; i++) {
 			switch(msg[i]){
 				case 1: SendMsg(consumer1, &msg[i], 1);
-						allocated1--;
+						//allocated1--;
 						break;
 
 				case 2: SendMsg(consumer2, &msg[i], 1);
-						allocated2--;
+						//allocated2--;
 						break;
 
 				case 3: SendMsg(consumer3, &msg[i], 1);
-						allocated3--;
+						//allocated3--;
 						break;
 
-				default: //kprintf("SND \n"); 
+				default: 
 						break;
 
 

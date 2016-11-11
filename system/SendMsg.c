@@ -16,7 +16,7 @@ uint32 SendMsg(pid32 pid, umsg32* msgs, uint32 msg_count)
 	uint32 sent_msgs = 0;	/* number of successfully sent messages */
 
 	for(int i = 0; i < msg_count; i++) {	
-		//kprintf("@%u@\n", msgs[i]);
+		
   		if(insertm(pid, msgs[i]) == SYSERR) { /* attempt to insert msg into mailbox */
   			break; /* if it cannot, return syserr */
 		}
