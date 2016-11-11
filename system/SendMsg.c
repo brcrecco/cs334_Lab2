@@ -23,6 +23,11 @@ uint32 SendMsg(pid32 pid, umsg32* msgs, uint32 msg_count)
 	sent_msgs++; /* successfully inserted into mailbox, increment sent_msgs */
   }
 
+  if(proctab[pid].prstate == PR_RECTIME) { //if pid is waiting on msgs
+  	unsleep(pid);	// awaken sleeping process
+	ready(pid);		// make it ready
+  }
+
   restore(mask);
   return sent_msgs;
 }
