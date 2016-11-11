@@ -10,16 +10,17 @@ status insertm(
 
 	struct	procent	*prptr = &proctab[pid];		// Ptr to process table entry	
 
-	umsg32		*mailbox = prptr->mailbox;
+/*	umsg32		*mailbox = prptr->mailbox;
 	sid32		sendsem  = prptr->sendsem;
 	sid32		recsem	= prptr->recsem;
-	int16 		tail = prptr->mboxtail;
+	int16 		tail = prptr->mboxtail;*/
 
-	if(semcount(sendsem) > 0) {		/* if there is an empty slot in mailbox to send a msg to */
-		wait(sendsem); 	/* decrement number of available spaces */
-		mailbox[tail] = msg;	/* place message at tail */
-		tail = (tail +1) % NMSG; 	/* update the tail */
-		signal(recsem);	/* signal recsem to indicate new receivable message */
+	if(semcount(prptr->sendsem) > 0) {		/* if there is an empty slot in mailbox to send a msg to */
+		wait(prptr->sendsem); 	/* decrement number of available spaces */
+		prptr->mailbox[prptr->mboxtail] = msg;	/* place message at tail */
+		//kprintf("$%u$\n", mailbox[tail]);
+		prptr->mboxtail = (prptr->mboxtail + 1) % NMSG; 	/* update the tail */
+		signal(prptr->recsem);	/* signal recsem to indicate new receivable message */
 	} else {
 		return SYSERR; /* no empty spaces, return SYSERR */
 	}

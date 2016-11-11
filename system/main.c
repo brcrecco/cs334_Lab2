@@ -44,9 +44,9 @@ process Task2Test(void) {
 
 
 process Task2Producer(pid32 consumer) {
-	umsg32* msg = 42;
+	umsg32 msg = 42;
 	while(1) {
-		uint32 sent_msgs = SendMsg(consumer, msg, 1);
+		uint32 sent_msgs = SendMsg(consumer, &msg, 1);
 		if(sent_msgs != SYSERR) {
 			task2produced += sent_msgs;
 		}	
@@ -59,7 +59,7 @@ process Task2Producer(pid32 consumer) {
 
 process Task2Consumer(void) {
 	int32 numMsgs = 1;
-	umsg32* msg[numMsgs];
+	umsg32 msg[numMsgs];
 	while(1) {
 		syscall rcv = RcvMsg(msg, numMsgs);
 		if(rcv == OK) {
@@ -72,18 +72,26 @@ process Task2Consumer(void) {
 }
 
 process Task3Test(void) {
+/*
+	umsg32 one = 1;
+	umsg32 two = 2;
+	umsg32 three = 3;
+*/
+	umsg32 msg1[1];
+	umsg32 msg2[1];
+	umsg32 msg3[1];
 
-	umsg32* msg1 = 1;
-	umsg32* msg2 = 2;
-	umsg32* msg3 = 3;
+	msg1[0] = 1;
+	msg2[0] = 2;
+	msg3[0] = 3;
 
 	pid32 consumer1 = create(Task3Consumer, 8192, 20, "Task3Consumer1", 0);
 	pid32 consumer2 = create(Task3Consumer, 8192, 20, "Task3Consumer2", 0);
 	pid32 consumer3 = create(Task3Consumer, 8192, 20, "Task3Consumer3", 0);
 	pid32 allocator = create(Task3Allocator, 8192, 40, "Task3Allocator", 3, consumer1, consumer2, consumer3);
-	pid32 producer1 = create(Task3Producer, 8192, 20, "Task3Producer", 2, allocator, msg1);
-	pid32 producer2 = create(Task3Producer, 8192, 20, "Task3Producer", 2, allocator, msg2);
-	pid32 producer3 = create(Task3Producer, 8192, 20, "Task3Producer", 2, allocator, msg3);
+	pid32 producer1 = create(Task3Producer, 8192, 20, "ONE", 2, allocator, msg1);
+	pid32 producer2 = create(Task3Producer, 8192, 20, "TWO", 2, allocator, msg2);
+	pid32 producer3 = create(Task3Producer, 8192, 20, "THREE", 2, allocator, msg3);
 
 	pri16 p1 = resume(producer1);
 	pri16 p2 = resume(producer2);
@@ -93,8 +101,7 @@ process Task3Test(void) {
 	pri16 c2 = resume(consumer2);
 	pri16 c3 = resume(consumer3);
 
-	kprintf("p1: %d, p2: %d, p3: %d, a: %d, c1: %d, c2: %d, c3: %d \n", p1, p2, p3, a, c1, c2, c3);
-
+	
 	while(1) {
 		kprintf("Producer 1 created: %d items and Consumer 1 consumed: %d items\n", task3produced1, task3consumed1);
 		kprintf("Producer 2 created: %d items and Consumer 2 consumed: %d items\n", task3produced2, task3consumed2);
@@ -103,14 +110,12 @@ process Task3Test(void) {
 
 		sleepms(1);
 	}
-
+	
 	return OK;
 
 }
 
 process Task3Producer(pid32 allocator, umsg32* msg) {
-
-	kprintf("Reaches Producer \n");
 
 	while(1) {
 		uint32 sent_msgs = SendMsg(allocator, msg, 1);
@@ -122,11 +127,10 @@ process Task3Producer(pid32 allocator, umsg32* msg) {
 						break;
 				case 3: task3produced3 += sent_msgs;
 						break;
-				default: kprintf("not producing\n");
+				default: //kprintf("not producing\n");
 						break;
 			}
 		}
-		kprintf("sent_msgs = %d\n", sent_msgs);	
 		sleepms(1);
 	}
 
@@ -135,20 +139,20 @@ process Task3Producer(pid32 allocator, umsg32* msg) {
 
 process Task3Consumer(void) {
 
-	kprintf("Reaches Consumer \n");
+	umsg32 msg[1];
 
-	umsg32* msg[1];
 	while(1) {
 		syscall rcv = RcvMsg(msg, 1);
+		//kprintf("[%d] \n", *msg);
 		if(rcv == OK) {
-			switch((*msg)[1]) {
+			switch(msg[0]) {	// gets the first value
 				case 1: task3consumed1++;
 						break;
 				case 2: task3consumed2++;
 						break;
 				case 3: task3consumed3++;
 						break;
-				default: kprintf("not consuming\n"); 
+				default: //kprintf("not consuming\n"); 
 						break;
 			}
 		}
@@ -159,40 +163,40 @@ process Task3Consumer(void) {
 }
 
 process Task3Allocator(pid32 consumer1, pid32 consumer2, pid32 consumer3) {
-	kprintf("Reaches Allocator \n");
 
-	umsg32* msg[5];
+	umsg32 msg[5];	// storage for receiving 5 messages at a time
 
 	while(1) {
-		RcvMsg(msg, 5);
+		syscall rect = RcvMsg(msg, 5);
 		for(int i = 0; i < 5; i++){
-			switch((*msg)[i]) {
+			//kprintf("{%u}\n", msg[i]);
+			switch(msg[i]) {
 				case 1: allocated1++;
 						break;
 				case 2: allocated2++;
 						break;
 				case 3: allocated3++;
 						break;
-				default: kprintf("alo not rcving legit\n"); 
+				default: //kprintf("REC\n"); 
 						break;
 			}
 		}
 
 		for(int i = 0; i < 5; i++) {
-			switch((*msg)[i]){
-				case 1: SendMsg(consumer1, msg[i], 1);
+			switch(msg[i]){
+				case 1: SendMsg(consumer1, &msg[i], 1);
 						allocated1--;
 						break;
 
-				case 2: SendMsg(consumer2, msg[i], 1);
+				case 2: SendMsg(consumer2, &msg[i], 1);
 						allocated2--;
 						break;
 
-				case 3: SendMsg(consumer3, msg[i], 1);
+				case 3: SendMsg(consumer3, &msg[i], 1);
 						allocated3--;
 						break;
 
-				default: kprintf("alo not snding msgs \n"); 
+				default: //kprintf("SND \n"); 
 						break;
 
 
