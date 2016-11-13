@@ -8,7 +8,7 @@ uint32 SendMsg(pid32 pid, umsg32* msgs, uint32 msg_count)
 
 	mask = disable();
 
-	if(msg_count < 0 || isbadpid(pid)) {
+	if(isbadpid(pid)){
 		restore(mask);
 		return SYSERR;
 	}
@@ -21,9 +21,10 @@ uint32 SendMsg(pid32 pid, umsg32* msgs, uint32 msg_count)
   			break; /* if it cannot, return syserr */
 		}
 	sent_msgs++; /* successfully inserted into mailbox, increment sent_msgs */
-  }
+  	}
 
-  if(proctab[pid].prstate == PR_RECTIME) { //if pid is waiting on msgs
+  if(proctab[pid].prstate == PR_RECTIM) { //if pid is waiting on msgs
+  	proctab[pid].prstate = PR_RECVMSG;	// set state of waiting process to indicate a msg has been sent 
   	unsleep(pid);	// awaken sleeping process
 	ready(pid);		// make it ready
   }

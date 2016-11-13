@@ -20,11 +20,13 @@ int allocated3 = 0;
 
 
 process Task2Test(), Task2Producer(), Task2Consumer(), Task3Producer(), Task3Consumer(), Task3Test(),
-		Task3Allocator();
+		Task3Allocator(), EqualArrayTest(), UnequalArrayTest(), UnequalArrayTestConsumer(), UnequalArrayTestProducer(),
+		SyserrTestSend(), SyserrTestRec();
 
 process	main(void)
-{
-	resume(create(Task2Test, 8192, 50, "Task2Test", 0));
+{	
+	resume(create(SyserrTestSend, 8192, 50, "SyserrTestSend", 0));
+	//resume(create(SyserrTestRec, 8192, 50, "SyserrTestRec", 0));
 	return OK;
 }
 
@@ -205,4 +207,107 @@ process Task3Allocator(pid32 consumer1, pid32 consumer2, pid32 consumer3) {
 		sleepms(10);
 	}
 	return OK;
+}
+
+process EqualArrayTest(void) {
+	int n = 30;	// number of messages sent
+	umsg32 msg[n]; 	// sent messages
+	umsg32 rec_msg[n]; //received messages
+
+	while(1){	// do forever
+		for(int i = 0; i < n; i++) {	// store messages in array
+			msg[i] = 40 + i;
+		}
+
+		SendMsg(currpid, msg, n);	// send the messages
+
+		RcvMsg(rec_msg, n);		// receive the messages
+
+		for(int i = 0; i< n; i++) {	// check to see if the received messages are the sent messages
+			if(rec_msg[i] != msg[i]) {
+				kprintf("Fail\n");	// if not, print fail and return syserr
+				return SYSERR;
+			}
+		}	// otherwise, it passes
+		kprintf("Pass\n");
+	}
+	return OK;
+}
+
+process UnequalArrayTest(void){ 
+	pid32 consumer = create(UnequalArrayTestConsumer, 8192, 20, "UnequalArraytestConsumer", 1, 30);
+	resume(consumer);
+	resume(create(UnequalArrayTestProducer, 8192, 20, "UnequalArrayTestProducer", 2, 30, consumer));
+}
+
+int iMsg;
+process UnequalArrayTestProducer(int n, pid32 pid) {
+
+	umsg32 msg[n]; // array holding msgs to send
+	iMsg = 0;
+
+	while(1) {
+
+		for(int i = 0; i < n; i++) {	// insert the messages into the array
+			msg[i] = iMsg;	// set the message
+			iMsg++;		// increment message value
+		}
+		SendMsg(pid, msg, n);	// send the message
+	}
+
+	return OK;
+}
+
+process UnequalArrayTestConsumer(int m) {
+
+	umsg32 rec_msg[m]; // array holding msgs to be received
+
+
+	while(1) {
+		RcvMsg(rec_msg, m);	// receive messages
+
+		for(int i = 0; i < (m-1); i++) {	// check to see the successive messages are one more than the previous message (as they should be)
+			if(rec_msg[i] != (rec_msg[i + 1] - 1)) {
+				kprintf("Fail\n");	// if not, print fail and return syserr
+				return SYSERR;
+			}
+		}
+		kprintf("Pass\n");	// otherwise, it passes
+	}
+	return OK;
+}
+
+process SyserrTestSend(void){
+	int n = 20;
+	umsg32 msgs[n];
+
+	while(1){
+		uint32 stat = SendMsg(NPROC+1, msgs, n);
+
+		if(stat == (uint32)SYSERR){
+			kprintf("PASS\n");
+		}
+		else{
+			kprintf("FAIL\n");
+			return SYSERR;
+		}
+	}
+
+}
+
+process SyserrTestRec(void){
+	int n = 20;
+	umsg32 msgs[n];
+
+	while(1){
+		syscall stat = RcvMsg(msgs, -1);
+		kprintf("%u\n", stat);
+		if(stat == (syscall)SYSERR){
+			kprintf("PASS\n");
+		}
+		else{
+			kprintf("FAIL\n");
+			return SYSERR;
+		}
+	}
 }
