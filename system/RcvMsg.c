@@ -8,13 +8,6 @@ syscall RcvMsg(umsg32* msgs, uint32 msg_count)
   
 	struct	procent	*prptr = &proctab[currpid];		/* Ptr to process table entry	*/
 
-	//kprintf("+%u+\n", sizeof(msgs)/sizeof(msgs[0]));
-
-	/*if((sizeof(msgs)/sizeof(umsg32)) < msg_count) {
-		restore(mask);
-		return SYSERR;
-	}*/
-
 	for(int i = 0; i < msg_count; i++ ) { 
 		wait(prptr->recsem); /* wait on msgs to be received */
 	}
