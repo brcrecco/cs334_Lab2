@@ -22,11 +22,12 @@ int allocated3 = 0;
 process Task2Test(), Task2Producer(), Task2Consumer(), Task3Producer(), Task3Consumer(), Task3Test(),
 		Task3Allocator(), EqualArrayTest(), UnequalArrayTest(), UnequalArrayTestConsumer(), UnequalArrayTestProducer(),
 		SyserrTestSend(), RcvMsgWaitTest(), RcvMsgWaitLongTest(), RcvMsgWaitLongTestConsumer(), 
-		RcvMsgWaitLongTestProducer();
+		RcvMsgWaitLongTestProducer(), RcvMsgWaitIncompleteTest(), RcvMsgWaitDelayTest(), 
+		RcvMsgWaitDelayProducer(), RcvMsgWaitDelayConsumer();
 
 process	main(void)
 {	
-	resume(create(RcvMsgWaitLongTest, 8192, 50, "RcvMsgWaitLongTest", 0));
+	resume(create(RcvMsgWaitDelayTest, 8192, 50, "RcvMsgWaitDelayTest", 0));
 	return OK;
 }
 
@@ -339,5 +340,69 @@ process RcvMsgWaitLongTestProducer(pid32 pid, int n) {
 
 	SendMsg(pid, msgs, n); /* Send messages */ 
 
+	return OK;
+}
+
+process RcvMsgWaitIncompleteTest(void) { /* Test an appropraite return value for insufficent messages received*/
+	int n = 3; /* Number of messages to be sent*/
+	int m = 5; /* Number of messages desired */
+	int32 maxwait = 10; /* Short maxwait */
+	
+	umsg32 snd_msgs[n]; /* Array of messages to be sent */
+	umsg32 rcv_msgs[m]; /* Array of messages to be received */
+
+	for(int i = 0; i < n; i++) {
+		snd_msgs[i] = i; /* Place messages in array */
+	}
+
+	SendMsg(currpid, snd_msgs, n); /* Send messages to self */
+
+	uint32 received = RcvMsgWait(maxwait, rcv_msgs, m); /* Receive all messages in mailbox */
+
+	if(received == n) { /* If, return value equal to n*/
+		kprintf("Pass\n"); /* PASS */
+	} else {
+		kprintf("Fail\n"); /* Else, FAIL */
+	}
+	return OK;
+}
+
+process RcvMsgWaitDelayConsumer(void) {
+	int n = 5; /* Number of messages desired */
+	int m = 2; /* Number of messages to send to self */
+	umsg32 rec_msgs[n]; /* Array of messages to receive */
+	umsg32 snd_msgs[m]; /* Array of messsages to send to self */
+
+	for(int i = 0; i < m; i++) {
+		snd_msgs[i] = i; /* Insert messages into array */
+	}
+
+	SendMsg(currpid, snd_msgs, m); /* Send messages to self */
+	resume(create(RcvMsgWaitDelayProducer, 8192, 20, "RcvMsgWaitDelayProducer", 2, currpid, n)); /* Create producer */
+	uint32 received = RcvMsgWait(1000000, rec_msgs, n);	/* Wait on n messages */ 				/* with a smaller priority */
+
+	if(received == n) { /* If all messages received */
+		kprintf("Pass\n"); /* PASS */ 
+	} else {
+		kprintf("Fail\n"); /* Else, FAIL */
+	}
+	return OK;
+}
+
+
+process RcvMsgWaitDelayProducer(pid32 pid, int32 n) {
+	umsg32 snd_msgs[n]; /* Array of messages to be sent */
+	
+	for(int i = 0; i < n; i++) {
+		snd_msgs[i] = i; /* Insert messages into array */
+	}
+
+	SendMsg(pid, snd_msgs, n); /* Send messages */
+
+	return OK;
+}
+
+process RcvMsgWaitDelayTest(void) { /* Test for if RcvMsgWait will wait if insufficient number of msgs currently in mailbox*/
+	resume(create(RcvMsgWaitDelayConsumer, 8192, 50, "RcvMsgWaitDelayConsumer", 0)); /* Only create consumer */
 	return OK;
 }
